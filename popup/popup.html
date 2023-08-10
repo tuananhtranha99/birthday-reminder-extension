@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Birthday Reminder</title>
+    <link rel="stylesheet" href="bulma.min.css" />
+</head>
+<body>
+    <div class="container m-3">
+        <h1 class="title">Birthday Reminder</h1>
+
+        <div class="field">
+            <label for="" class="label"><a href="./birthday-list.html">See birthday list</a></label>
+        </div>
+    </div>
+    <div class="container m-3">
+        <div class="field">
+            <label for="" class="label">Name of that important person 😊</label>
+            <div class="control">
+                <input type="text" class="input" name="" id="nameInput" placeholder="Trần Hà Tuấn Anh"></select>
+            </div>
+
+        <p id="nameInputError" class="help is-danger" style="display: none;">Please enter a name</p>
+        </div>
+
+        <div class="field">
+            <label for="" class="label">Birthday 🎂</label>
+            <div class="control">
+                <input type="date" class="input" id="birthDate">
+            </div>
+
+            <p id="birthDateError" class="help is-danger" style="display: none;">Please enter a valid birth date</p>
+        </div>
+
+        <div class="field">
+            <label for="" class="label">Facebook 🔗</label>
+            <div class="control">
+                <input type="text" placeholder="https://www.facebook.com/anhtht99" class="input" id="fbLinkInput">
+            </div>
+
+            <p id="fbError" class="help is-danger" style="display: none;">Please enter a valid end date</p>
+        </div>
+    </div>
+
+    <div class="container m-3">
+        <button class="button is-success is-fullwidth" id="saveInfoButton">Remind me when it's birthday of this angel 📢</button>
+    </div>
+
+</body>
+
+<script src="spacetime.min.js"></script>
+<script src="popup.js"></script>
+<script src="../background.js"></script>
+</html>
