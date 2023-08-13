@@ -5,30 +5,33 @@ chrome.storage.local.get(["infos"], (result) => {
   if (infos && infos.length > 0) {
     infos.forEach((info, i) => {
       let trElement = document.createElement("tr");
-      createTdElement("td", i + 1, trElement);
-      createTdElement("td", info.name, trElement);
+      createElement("td", i + 1, trElement);
+      createElement("td", info.name, trElement);
 
-      createTdElement("a");
-      createTdElement("td", info.birthDate, trElement);
-      createTdElement("td", info.fbLink, trElement);
+      createElementWithAttribute("a", info.fbLink, "href", info.fbLink, trElement);
+      createElement("td", info.birthDate, trElement);
+      createElement("td", "", trElement);
       tableBody.appendChild(trElement);
     });
   }
 });
 
 const createElement = (tagName, value, parentElement) => {
-  let tdElement = document.createElement(tagName);
-  tdElement.innerHTML = value;
-  parentElement.appendChild(tdElement);
+  let element = document.createElement(tagName);
+  element.innerHTML = value;
+  parentElement.appendChild(element);
+  return element;
 };
 
 const createElementWithAttribute = (
   tagName,
   value,
-  attributes,
+  attributeName,
+  attributeValue,
   parentElement
 ) => {
-  let tdElement = document.createElement(tagName);
-  tdElement.innerHTML = value;
-  parentElement.appendChild(tdElement);
+  let element = document.createElement(tagName);
+  element.innerHTML = value;
+  element.setAttribute(attributeName, attributeValue),
+  parentElement.appendChild(element);
 };
