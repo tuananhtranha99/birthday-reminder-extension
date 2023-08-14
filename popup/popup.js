@@ -94,6 +94,9 @@ saveInfoButton.onclick = () => {
     infos: cachedInfos,
   });
   showSuccessToast();
+  nameInput.value = "";
+  birthDateInput.value = "";
+  fbLinkInput.value = "";
 };
 
 const getInfos = () => {

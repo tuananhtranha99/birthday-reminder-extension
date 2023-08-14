@@ -17,17 +17,19 @@ chrome.storage.local.get(["infos"], (result) => {
       let trElement = document.createElement("tr");
       createElement("td", i + 1, trElement);
       createElement("td", info.name, trElement);
+      createElement("td", info.birthDate, trElement);
 
-      let aTag = createElementWithAttribute(
+      let tdForFbLink = createElement("td", "", trElement);
+      createElementWithAttribute(
         "a",
         info.fbLink,
         [["href", info.fbLink]],
-        trElement
+        tdForFbLink
       );
-      aTag.onclick = () => {
+      tdForFbLink.onclick = () => {
         chrome.tabs.create({ url: info.fbLink });
       };
-      createElement("td", info.birthDate, trElement);
+
       let tdElement = createElement("td", "", trElement);
 
       if (info.status != 1) {
@@ -47,6 +49,7 @@ chrome.storage.local.get(["infos"], (result) => {
           chrome.storage.local.set({ infos: infos });
           window.location.reload();
         };
+        setClassForElement(trElement, "inActive");
       } else {
         let imgElement = createElementWithAttribute(
           "img",
@@ -76,6 +79,9 @@ chrome.storage.local.get(["infos"], (result) => {
         tdElement
       );
       deleteButton.style.width = "25px";
+      deleteButton.onclick = () => {
+        infos.splice(i, 1);
+      };
       tableBody.appendChild(trElement);
     });
   }
@@ -103,4 +109,8 @@ const createElementWithAttribute = (
   });
   parentElement.appendChild(element);
   return element;
+};
+
+const setClassForElement = (element, className) => {
+  element.className = className;
 };
