@@ -50,10 +50,6 @@ const showDateError = (dateErrorElem, errorMessage) => {
 };
 
 const validateDates = () => {
-  const today = spacetime.now().startOf("day");
-
-  const startDate = spacetime(birthDateInput.value).startOf("day");
-
   const isStartDateValid = validateStartDate();
   const isEndDateValid = validateEndDate();
 
@@ -70,43 +66,69 @@ const performOnStartValidations = () => {
   return nameInput.value && isDateValid;
 };
 
-saveInfoButton.onclick = () => {
-  const allFieldsValid = performOnStartValidations();
-  if (allFieldsValid) {
-    const newInfo = {
-      name: nameInput.value,
-      birthDate: birthDateInput.value,
-      fbLink: fbLinkInput.value,
-      //   tzData:
-      //     nameInput.options[nameInput.selectedIndex].getAttribute("data-tz"),
-    };
-    chrome.runtime.sendMessage({
-      event: "onSave",
-      newInfo: newInfo,
-      infos: cachedInfos,
-    });
-  }
+const isExistInList = (fbLink) => {
+  getInfos();
+  return cachedInfos.find((currentInfo) => currentInfo.fbLink == fbLink) ==
+    undefined
+    ? false
+    : true;
 };
 
-chrome.storage.local.get(["infos"], (result) => {
-  const { infos } = result;
-
-  if (infos && infos.length > 0) {
-    cachedInfos = infos;
-  } else {
-    cachedInfos = [];
+saveInfoButton.onclick = () => {
+  const allFieldsValid = performOnStartValidations();
+  const isExist = isExistInList(fbLinkInput.value);
+  if (!allFieldsValid || isExist) {
+    showDangerToast();
+    return;
   }
-});
+  const newInfo = {
+    name: nameInput.value,
+    birthDate: birthDateInput.value,
+    fbLink: fbLinkInput.value,
+    status: 1,
+  };
 
-// const setLocations = (locations) => {
-//   locations.forEach((location) => {
-//     let optionElement = document.createElement("option");
-//     optionElement.value = location.id;
-//     optionElement.innerHTML = location.name;
-//     optionElement.setAttribute("data-tz", location.tzData);
-//     nameInput.appendChild(optionElement);
-//   });
-// };
+  chrome.runtime.sendMessage({
+    event: "onSave",
+    newInfo: newInfo,
+    infos: cachedInfos,
+  });
+  showSuccessToast();
+};
+
+const getInfos = () => {
+  chrome.storage.local.get(["infos"], (result) => {
+    const { infos } = result;
+
+    if (infos && infos.length > 0) {
+      cachedInfos = infos;
+    } else {
+      cachedInfos = [];
+    }
+  });
+};
+
+getInfos();
+
+const showSuccessToast = () => {
+  bulmaToast.toast({
+    message: "🐱 Add successfully!",
+    duration: 2000,
+    type: "is-success",
+    pauseOnHover: true,
+    animate: { in: "fadeIn", out: "fadeOut" },
+  });
+};
+
+const showDangerToast = () => {
+  bulmaToast.toast({
+    message: "🐵 This person is already existed",
+    duration: 2000,
+    type: "is-danger",
+    pauseOnHover: true,
+    animate: { in: "fadeIn", out: "fadeOut" },
+  });
+};
 
 const today = spacetime.now().startOf("day").format();
 birthDateInput.setAttribute("max", today);

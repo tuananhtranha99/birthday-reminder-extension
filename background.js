@@ -45,34 +45,45 @@ chrome.alarms.onAlarm.addListener(() => {
   chrome.storage.local.get(["infos"], (result) => {
     const { infos } = result;
     if (infos && infos.length > 0) {
-      console.log("Alarm infos: ", infos);
       handleNotification(infos);
     }
   });
 });
 
 const handleNotification = (infos) => {
-  console.log("???");
   if (infos.length > 0) {
-    const filteredItems = infos.filter(isBirthdayComing);
+    const filteredItems = infos.filter(isBirthdayComing && isActive);
     console.log("filteredItems: ", filteredItems);
-    if (filteredItems.length > 0) createNotification(filteredItems[0]);
+    if (filteredItems.length > 0)
+      createNotification(filteredItems[0], filteredItems.length - 1);
   }
 };
 
-let fbUrl;
+let fbLink;
 const createNotification = (activeAppointment) => {
   chrome.notifications.create({
     type: "basic",
     title: "There will have a birthday soon!",
-    message: `There is one week left before ${activeAppointment.name}'s birthday. Let's prepare something for this lovely one`,
+    message: `${
+      activeAppointment.name
+    }'s birthday - ${activeAppointment.birthDate.replaceAll(
+      "-",
+      "/"
+    )} is coming. Let's prepare something for this lovely one`,
     iconUrl: "./images/icon-48.png",
   });
-  fbUrl = activeAppointment.fbLink;
+  fbLink = activeAppointment.fbLink;
 };
 
 chrome.notifications.onClicked.addListener(() => {
-  chrome.tabs.create({ url: fbUrl });
+  chrome.tabs.create({ url: fbLink });
+  chrome.storage.local.get(["infos"], (result) => {
+    const { infos } = result;
+    if (infos && infos.length > 0) {
+      infos.find((info) => info.fbLink == fbLink).status = 0;
+      chrome.storage.local.set({ infos: infos });
+    }
+  });
 });
 
 const isBirthdayComing = (info) => {
@@ -100,4 +111,8 @@ const isBirthdayComing = (info) => {
   } else {
     return false;
   }
+};
+
+const isActive = (info) => {
+  return info.status == 1;
 };
