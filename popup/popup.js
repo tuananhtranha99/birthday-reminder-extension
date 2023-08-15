@@ -28,7 +28,7 @@ const enableElement = (elem) => {
 
 const validateStartDate = () => {
   if (!birthDateInput.value) {
-    showDateError(birthDateError, "Please enter a valid start date");
+    showDateError(birthDateError, "Oops, you forgot to enter birth date");
   } else {
     hideElement(birthDateError);
   }
@@ -37,7 +37,7 @@ const validateStartDate = () => {
 
 const validateEndDate = () => {
   if (!fbLinkInput.value) {
-    showDateError(fbError, "Please enter a valid end date");
+    showDateError(fbError, "Oh no! You haven't entered a facebook url");
   } else {
     hideElement(fbError);
   }
@@ -77,7 +77,10 @@ const isExistInList = (fbLink) => {
 saveInfoButton.onclick = () => {
   const allFieldsValid = performOnStartValidations();
   const isExist = isExistInList(fbLinkInput.value);
-  if (!allFieldsValid || isExist) {
+  if (!allFieldsValid) {
+    return;
+  }
+  if (isExist) {
     showDangerToast();
     return;
   }

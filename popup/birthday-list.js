@@ -5,21 +5,24 @@ let isActiveTitle = "You haven't said happy birthday to this lovely person";
 let isInactiveIcon = "😄";
 let isInactiveTitle =
   "You already said happy birthday to this lovely person. Hurray!";
-let deleteIcon = "❌";
 
-// let cachedInfos;
-chrome.storage.local.get(["infos"], (result) => {
-  const { infos } = result;
-  // cachedInfos = result;
+const getInfos = () => {
+  chrome.storage.local.get(["infos"], (result) => {
+    let { infos } = result;
 
-  if (infos && infos.length > 0) {
-    infos.forEach((info, i) => {
+    if (!infos || infos.length == 0) {
+      document.getElementById("exportBtn").disabled = true;
+      return;
+    }
+    let i = 0;
+    while (i < infos.length) {
+      let info = infos[i];
       let trElement = document.createElement("tr");
-      createElement("td", i + 1, trElement);
-      createElement("td", info.name, trElement);
-      createElement("td", info.birthDate, trElement);
+      createElementWithoutAttribute("td", i + 1, trElement);
+      createElementWithoutAttribute("td", info.name, trElement);
+      createElementWithoutAttribute("td", info.birthDate, trElement);
 
-      let tdForFbLink = createElement("td", "", trElement);
+      let tdForFbLink = createElementWithoutAttribute("td", "", trElement);
       createElementWithAttribute(
         "a",
         info.fbLink,
@@ -30,20 +33,22 @@ chrome.storage.local.get(["infos"], (result) => {
         chrome.tabs.create({ url: info.fbLink });
       };
 
-      let tdElement = createElement("td", "", trElement);
+      let tdElement = createElementWithoutAttribute("td", "", trElement);
 
       if (info.status != 1) {
-        let spanElement = createElementWithAttribute(
-          "span",
-          info.status == 1 ? "" : isInactiveIcon,
+        let finishIcon = createElementWithAttribute(
+          "img",
+          "",
           [
+            ["src", "../images/finishIcon.png"],
             ["title", isInactiveTitle],
             ["fbLink", info.fbLink],
           ],
           tdElement
         );
-        spanElement.onclick = () => {
-          let fbLink = spanElement.getAttribute("fbLink");
+        finishIcon.style.width = "20px";
+        finishIcon.onclick = () => {
+          let fbLink = finishIcon.getAttribute("fbLink");
           let selectedPerson = infos.find((info) => info.fbLink == fbLink);
           selectedPerson.status = 1;
           chrome.storage.local.set({ infos: infos });
@@ -75,19 +80,24 @@ chrome.storage.local.get(["infos"], (result) => {
       let deleteButton = createElementWithAttribute(
         "img",
         "",
-        [["src", "../images/deleteIcon.jpg"]],
+        [["src", "../images/deleteIcon.webp"]],
         tdElement
       );
-      deleteButton.style.width = "25px";
-      deleteButton.onclick = () => {
+      deleteButton.style.width = "22px";
+      deleteButton.onclick = (i) => {
         infos.splice(i, 1);
+        chrome.storage.local.set({ infos: infos });
+        window.location.reload();
       };
       tableBody.appendChild(trElement);
-    });
-  }
-});
+      i++;
+    }
+  });
+};
 
-const createElement = (tagName, value, parentElement) => {
+getInfos();
+
+const createElementWithoutAttribute = (tagName, value, parentElement) => {
   let element = document.createElement(tagName);
   element.innerHTML = value;
   parentElement.appendChild(element);
@@ -113,4 +123,48 @@ const createElementWithAttribute = (
 
 const setClassForElement = (element, className) => {
   element.className = className;
+};
+
+const fileSelector = document.getElementById("fileUpload");
+fileSelector.addEventListener("change", (event) => {
+  const file = event.target.files[0];
+  var fr = new FileReader();
+  fr.readAsText(file);
+  fr.onload = () => {
+    chrome.storage.local.get(["infos"], (result) => {
+      let { infos } = result;
+      if (!infos) {
+        infos = JSON.parse(fr.result);
+        console.log("what is this: ", infos);
+      } else {
+        infos = [...infos, ...JSON.parse(fr.result)];
+        console.log("what is this2: ", infos);
+      }
+      chrome.storage.local.set({ infos: infos });
+    });
+  };
+  window.location.reload();
+});
+
+document.getElementById("importBtn").onclick = () => {
+  fileSelector.click();
+};
+
+document.getElementById("exportBtn").onclick = () => {
+  exportFile();
+};
+
+const exportFile = () => {
+  chrome.storage.local.get(["infos"], (result) => {
+    let { infos } = result;
+    if (!infos || infos.length == 0) {
+      return;
+    }
+    const link = document.createElement("a");
+    const file = new Blob([JSON.stringify(infos)], { type: "text/plain" });
+    link.href = URL.createObjectURL(file);
+    link.download = "Export-Birthday.txt";
+    link.click();
+    URL.revokeObjectURL(link.href);
+  });
 };

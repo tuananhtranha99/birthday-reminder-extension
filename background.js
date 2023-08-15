@@ -52,7 +52,9 @@ chrome.alarms.onAlarm.addListener(() => {
 
 const handleNotification = (infos) => {
   if (infos.length > 0) {
-    const filteredItems = infos.filter(isBirthdayComing && isActive);
+    const filteredItems = infos.filter(
+      (info) => isBirthdayComing(info) && isActive(info)
+    );
     console.log("filteredItems: ", filteredItems);
     if (filteredItems.length > 0)
       createNotification(filteredItems[0], filteredItems.length - 1);
@@ -103,7 +105,6 @@ const isBirthdayComing = (info) => {
 
   // Convert the time difference to days
   const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-  console.log("daysDiff", daysDiff);
 
   // Check if the upcoming birthday is within 7 days
   if (daysDiff >= 0 && daysDiff <= 7) {
