@@ -1,4 +1,6 @@
-const ALARM_JOB_NAME = "BIRTHDAY_ALARM";
+const BIRTHDAY_ALARM = "BIRTHDAY_ALARM";
+const RESET_STATUS_ALARM = "RESET_STATUS_ALARM";
+const AUTO_BACKUP_ALARM = "AUTO_BACKUP_ALARM";
 
 chrome.runtime.onInstalled.addListener((details) => {
   handleOnStop();
@@ -26,29 +28,65 @@ const handleOnStop = () => {
 const handleOnSave = (newInfo, infos) => {
   infos.push(newInfo);
   chrome.storage.local.set({ infos: infos });
-  createAlarm();
+  createAlarm(BIRTHDAY_ALARM, 60.0);
 };
 
-const createAlarm = () => {
-  chrome.alarms.get(ALARM_JOB_NAME, (existingAlarm) => {
+const createAlarm = (alarmName, interval) => {
+  chrome.alarms.get(alarmName, (existingAlarm) => {
     if (!existingAlarm) {
-      chrome.alarms.create(ALARM_JOB_NAME, { periodInMinutes: 1.0 });
+      chrome.alarms.create(alarmName, { periodInMinutes: interval });
     }
   });
 };
+
+createAlarm(RESET_STATUS_ALARM, 1440.0);
+// createAlarm(AUTO_BACKUP_ALARM, 2.0);
 
 const stopAlarm = () => {
   chrome.alarms.clearAll();
 };
 
-chrome.alarms.onAlarm.addListener(() => {
-  chrome.storage.local.get(["infos"], (result) => {
-    const { infos } = result;
-    if (infos && infos.length > 0) {
-      handleNotification(infos);
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (BIRTHDAY_ALARM == alarm.name) {
+    chrome.storage.local.get(["infos"], (result) => {
+      const { infos } = result;
+      if (infos && infos.length > 0) {
+        handleNotification(infos);
+      }
+    });
+  } else if (RESET_STATUS_ALARM == alarm.name) {
+    chrome.storage.local.get(["infos"], (result) => {
+      const { infos } = result;
+      resetStatus(infos);
+    });
+  } else if (AUTO_BACKUP_ALARM == alarm.name) {
+    chrome.storage.local.get(["infos"], (result) => {
+      const { infos } = result;
+      resetStatus(infos);
+    });
+  }
+});
+
+// writeFile();
+
+const resetStatus = (infos) => {
+  if (!infos || infos.length == 0) return;
+  infos.forEach((info) => {
+    if (!isActive(info)) {
+      info.status = 1;
     }
   });
-});
+  chrome.storage.local.set({ infos: infos });
+};
+
+const backupToFile = () => {
+  if (!infos || infos.length == 0) return;
+  infos.forEach((info) => {
+    if (!isActive(info)) {
+      info.status = 1;
+    }
+  });
+};
 
 const handleNotification = (infos) => {
   if (infos.length > 0) {
