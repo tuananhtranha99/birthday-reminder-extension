@@ -40,7 +40,6 @@ const createAlarm = (alarmName, interval) => {
 };
 
 createAlarm(RESET_STATUS_ALARM, 1440.0);
-// createAlarm(AUTO_BACKUP_ALARM, 2.0);
 
 const stopAlarm = () => {
   chrome.alarms.clearAll();
@@ -66,8 +65,6 @@ chrome.alarms.onAlarm.addListener((alarm) => {
     });
   }
 });
-
-// writeFile();
 
 const resetStatus = (infos) => {
   if (!infos || infos.length == 0) return;

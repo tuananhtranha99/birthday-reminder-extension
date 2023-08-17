@@ -1,6 +1,7 @@
 import { isBirthdayComing } from "../lib/handleNotification.js";
 
 const tableBody = document.getElementById("tableBody");
+const exportBtn = document.getElementById("exportBtn");
 
 let isActiveTitle = "One important birthday is coming !!!!";
 let isInactiveTitle =
@@ -10,43 +11,61 @@ const getInfos = () => {
   chrome.storage.local.get(["infos"], (result) => {
     let { infos } = result;
 
-    if (!infos || infos.length == 0) {
-      document.getElementById("exportBtn").disabled = true;
+    if (isEmptyList(infos)) {
+      exportBtn.disabled = true;
       return;
     }
-    let map = new Map(
-      [
-        ...Object.entries(
-          groupBy(infos, (info) => info.birthDate.split("-")[1])
-        ),
-      ].sort()
+    let map = convertObjectToOrderedMap(
+      groupBy(infos, (info) => info.birthDate.split("-")[1]) // group birth dates by month
     );
-    map.forEach((value, key) => {
-      let trElement = document.createElement("tr");
 
-      let monthData = getMonth(key);
-      let tdForMonth = createElementWithAttribute(
-        "td",
-        monthData[0],
-        [["colspan", 5]],
-        trElement
-      );
-      tdForMonth.className = `tdMonth ${monthData[2]}`;
-      tdForMonth.style.backgroundImage = `url(${monthData[1]})`;
-      tableBody.appendChild(trElement);
+    populateDataFromMap(map, infos);
+  });
+};
+getInfos();
 
-      populateDataByMonth(
-        value.sort((a, b) =>
-          new Date(a.birthDate).getDate() > new Date(b.birthDate).getDate()
-            ? 1
-            : -1
-        ),
-        infos
-      );
-    });
+const isEmptyList = (list) => {
+  return !list || list.length == 0;
+};
+
+const convertObjectToOrderedMap = (object) => {
+  return new Map([...Object.entries(object)].sort());
+};
+
+const groupBy = (x, f) =>
+  x.reduce((a, b, i) => ((a[f(b, i, x)] ||= []).push(b), a), {});
+
+const populateDataFromMap = (map, allBirthdays) => {
+  map.forEach((birthDaysByMonth, month) => {
+    let trElement = document.createElement("tr");
+
+    handleMonthTitle(month, trElement, tableBody);
+
+    handleBirthdaysByMonth(
+      birthDaysByMonth.sort((a, b) =>
+        new Date(a.birthDate).getDate() > new Date(b.birthDate).getDate()
+          ? 1
+          : -1
+      ),
+      allBirthdays
+    );
   });
 };
 
+const handleMonthTitle = (month, relatedTrElement, relatedTable) => {
+  let monthData = getMonth(month); //Example: monthData = [January, ../images/january.jpg, color-white text-right]
+  let tdForMonth = createElementWithAttribute(
+    "td",
+    monthData[0],
+    [["colspan", 5]],
+    relatedTrElement
+  );
+  tdForMonth.className = `tdMonth ${monthData[2]}`;
+  tdForMonth.style.backgroundImage = `url(${monthData[1]})`;
+  relatedTable.appendChild(relatedTrElement);
+};
+
+// according to the birthday's month to show title - background - and some formats
 const getMonth = (month) => {
   switch (month) {
     case "01":
@@ -80,7 +99,7 @@ const getMonth = (month) => {
   }
 };
 
-const populateDataByMonth = (infosInMonth, allInfos) => {
+const handleBirthdaysByMonth = (infosInMonth, allInfos) => {
   let i = 0;
   while (i < infosInMonth.length) {
     let info = infosInMonth[i];
@@ -88,89 +107,110 @@ const populateDataByMonth = (infosInMonth, allInfos) => {
     createElementWithoutAttribute("td", i + 1, trElement);
     createElementWithoutAttribute("td", info.name, trElement);
     createElementWithoutAttribute("td", info.birthDate, trElement);
+    handleTdTagForFacebookUrl(info, trElement);
+    handleTdTagForOption(info, allInfos, trElement);
 
-    let tdForFbLink = createElementWithoutAttribute("td", "", trElement);
-    tdForFbLink.style.maxWidth = "200px";
-    tdForFbLink.onclick = () => {
-      chrome.tabs.create({ url: info.fbLink });
-    };
-
-    createElementWithAttribute(
-      "a",
-      info.fbLink,
-      [["href", info.fbLink]],
-      tdForFbLink
-    ).className = "aElement";
-
-    let tdElement = createElementWithoutAttribute("td", "", trElement);
-
-    if (info.status != 1) {
-      let finishIcon = createElementWithAttribute(
-        "img",
-        "",
-        [
-          ["src", "../images/finishIcon.png"],
-          ["title", isInactiveTitle],
-          ["fbLink", info.fbLink],
-        ],
-        tdElement
-      );
-      finishIcon.style.width = "20px";
-      finishIcon.onclick = () => {
-        let fbLink = finishIcon.getAttribute("fbLink");
-        let selectedPerson = infos.find((info) => info.fbLink == fbLink);
-        selectedPerson.status = 1;
-        chrome.storage.local.set({ infos: infos });
-        window.location.reload();
-      };
+    if (!isActive(info)) {
       setClassForElement(trElement, "inActive");
-    } else if (info.status == 1 && isBirthdayComing(info)) {
-      let imgElement = createElementWithAttribute(
-        "img",
-        "",
-        [
-          ["src", "../images/exclamation-0.webp"],
-          ["title", isActiveTitle],
-          ["fbLink", info.fbLink],
-        ],
-        tdElement
-      );
-      imgElement.style.width = "20px";
-
-      imgElement.onclick = () => {
-        let fbLink = imgElement.getAttribute("fbLink");
-        let selectedPerson = infos.find((info) => info.fbLink == fbLink);
-        selectedPerson.status = 0;
-        chrome.storage.local.set({ infos: infos });
-        window.location.reload();
-      };
     }
-
-    let deleteButton = createElementWithAttribute(
-      "img",
-      "",
-      [["src", "../images/deleteIcon.webp"]],
-      tdElement
-    );
-    deleteButton.style.width = "22px";
-    deleteButton.onclick = () => {
-      let deleteIndex = allInfos.findIndex(
-        (item) => item.fbLink == info.fbLink
-      );
-
-      allInfos.splice(deleteIndex, 1);
-      chrome.storage.local.set({ infos: allInfos });
-      window.location.reload();
-    };
     tableBody.appendChild(trElement);
     i++;
   }
 };
 
-getInfos();
+const handleTdTagForFacebookUrl = (personalInfo, relatedTrElement) => {
+  let tdForFbLink = createElementWithoutAttribute("td", "", relatedTrElement);
+  setStyleForElement(tdForFbLink, "maxWidth", "200px");
 
-const groupBy = (x, f) =>
-  x.reduce((a, b, i) => ((a[f(b, i, x)] ||= []).push(b), a), {});
+  tdForFbLink.onclick = () => {
+    chrome.tabs.create({ url: personalInfo.fbLink });
+  };
+
+  const aTagForFbUrl = createElementWithAttribute(
+    "a",
+    personalInfo.fbLink,
+    [["href", personalInfo.fbLink]],
+    tdForFbLink
+  );
+  setClassForElement(aTagForFbUrl, "aElement");
+};
+
+const handleTdTagForOption = (personalInfo, allBirthdays, relatedTrElement) => {
+  let tdElement = createElementWithoutAttribute("td", "", relatedTrElement);
+
+  if (!isActive(personalInfo)) {
+    showFinishedIcon(personalInfo, tdElement, allBirthdays);
+  } else if (isActive(personalInfo) && isBirthdayComing(personalInfo)) {
+    showUnfinishedIcon(personalInfo, tdElement, allBirthdays);
+  }
+  showDeleteIcon(personalInfo, tdElement, allBirthdays);
+};
+
+const showDeleteIcon = (personalInfo, relatedTdElement, allBirthdays) => {
+  let deleteButton = createElementWithAttribute(
+    "img",
+    "",
+    [["src", "../images/deleteIcon.webp"]],
+    relatedTdElement
+  );
+  setStyleForElement(deleteButton, "width", "22px");
+  deleteButton.onclick = () => {
+    let deleteIndex = allBirthdays.findIndex(
+      (item) => item.fbLink == personalInfo.fbLink
+    );
+
+    allBirthdays.splice(deleteIndex, 1);
+    chrome.storage.local.set({ infos: allBirthdays });
+    window.location.reload();
+  };
+};
+
+const showFinishedIcon = (personalInfo, relatedTdElement, allBirthdays) => {
+  let finishIcon = createElementWithAttribute(
+    "img",
+    "",
+    [
+      ["src", "../images/finishIcon.png"],
+      ["title", isInactiveTitle],
+      ["fbLink", personalInfo.fbLink],
+    ],
+    relatedTdElement
+  );
+  setStyleForElement(finishIcon, "width", "20px");
+  finishIcon.onclick = () => {
+    let fbLink = finishIcon.getAttribute("fbLink");
+    let selectedPerson = allBirthdays.find((info) => info.fbLink == fbLink);
+    selectedPerson.status = 1;
+    chrome.storage.local.set({ infos: allBirthdays });
+    window.location.reload();
+  };
+};
+
+const showUnfinishedIcon = (personalInfo, relatedTdElement, allBirthdays) => {
+  let imgElement = createElementWithAttribute(
+    "img",
+    "",
+    [
+      ["src", "../images/exclamation-0.webp"],
+      ["title", isActiveTitle],
+      ["fbLink", personalInfo.fbLink],
+    ],
+    relatedTdElement
+  );
+  setStyleForElement(imgElement, "width", "20px");
+
+  imgElement.onclick = () => {
+    let fbLink = imgElement.getAttribute("fbLink");
+    let selectedPerson = allBirthdays.find((info) => info.fbLink == fbLink);
+    selectedPerson.status = 0;
+    chrome.storage.local.set({ infos: allBirthdays });
+    window.location.reload();
+  };
+};
+
+const isActive = (info) => {
+  return info.status == 1;
+};
 
 const createElementWithoutAttribute = (tagName, value, parentElement) => {
   let element = document.createElement(tagName);
@@ -200,6 +240,11 @@ const setClassForElement = (element, className) => {
   element.className = className;
 };
 
+const setStyleForElement = (element, styleName, styleValue) => {
+  element.style[styleName] = styleValue;
+};
+
+//function to use when import a file
 const fileSelector = document.getElementById("fileUpload");
 fileSelector.addEventListener("change", (event) => {
   const file = event.target.files[0];
@@ -223,7 +268,7 @@ document.getElementById("importBtn").onclick = () => {
   fileSelector.click();
 };
 
-document.getElementById("exportBtn").onclick = () => {
+exportBtn.onclick = () => {
   exportFile();
 };
 

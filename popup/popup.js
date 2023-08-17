@@ -28,7 +28,7 @@ const enableElement = (elem) => {
 
 const validateStartDate = () => {
   if (!birthDateInput.value) {
-    showDateError(birthDateError, "Oops, you forgot to enter birth date");
+    showError(birthDateError, "Oops, you forgot to enter birth date");
   } else {
     hideElement(birthDateError);
   }
@@ -37,14 +37,19 @@ const validateStartDate = () => {
 
 const validateEndDate = () => {
   if (!fbLinkInput.value) {
-    showDateError(fbError, "Oh no! You haven't entered a facebook url");
+    showError(fbError, "Oh no! You haven't entered a facebook url");
+  } else if (!isFacebookURL(fbLinkInput.value)) {
+    showError(
+      fbError,
+      "Oh no! The URL you are entering is not a facebook url!"
+    );
   } else {
     hideElement(fbError);
   }
-  return fbLinkInput.value;
+  return fbLinkInput.value && isFacebookURL(fbLinkInput.value);
 };
 
-const showDateError = (dateErrorElem, errorMessage) => {
+const showError = (dateErrorElem, errorMessage) => {
   dateErrorElem.innerHTML = errorMessage;
   showElement(dateErrorElem);
 };
@@ -135,6 +140,11 @@ const showDangerToast = () => {
     animate: { in: "fadeIn", out: "fadeOut" },
   });
 };
+
+function isFacebookURL(inputURL) {
+  const facebookURLPattern = /^https?:\/\/(www\.)?(facebook\.com|fb\.com)/;
+  return facebookURLPattern.test(inputURL);
+}
 
 const today = spacetime.now().startOf("day").format();
 birthDateInput.setAttribute("max", today);
