@@ -9,10 +9,10 @@
         "default_title": "Who is the next person that you want to put into the important people list 👻"
     },
     "icons": {
-        "16": "/images/icon-16.png",
-        "32": "/images/icon-32.png",
-        "48": "/images/icon-48.png",
-        "128": "/images/icon-128.png"
+        "16": "/images/thumbnail/icon-16.png",
+        "32": "/images/thumbnail/icon-32.png",
+        "48": "/images/thumbnail/icon-48.png",
+        "128": "/images/thumbnail/icon-128.png"
     },
     "background": {
         "service_worker": "background.js",

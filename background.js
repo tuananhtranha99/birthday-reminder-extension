@@ -2,7 +2,7 @@ const BIRTHDAY_ALARM = "BIRTHDAY_ALARM";
 const RESET_STATUS_ALARM = "RESET_STATUS_ALARM";
 const AUTO_BACKUP_ALARM = "AUTO_BACKUP_ALARM";
 
-chrome.runtime.onInstalled.addListener((details) => {
+chrome.runtime.onInstalled.addListener(() => {
   handleOnStop();
 });
 
@@ -14,6 +14,9 @@ chrome.runtime.onMessage.addListener((data) => {
       break;
     case "onSave":
       handleOnSave(newInfo, infos);
+      break;
+    case "onImport":
+      createAlarm(BIRTHDAY_ALARM, 1.0);
       break;
     default:
       break;
@@ -27,7 +30,7 @@ const handleOnStop = () => {
 
 const handleOnSave = (newInfo, infos) => {
   infos.push(newInfo);
-  chrome.storage.local.set({ infos: infos });
+  chrome.storage.local.set({ infos });
   createAlarm(BIRTHDAY_ALARM, 60.0);
 };
 
@@ -46,107 +49,76 @@ const stopAlarm = () => {
 };
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (BIRTHDAY_ALARM == alarm.name) {
-    chrome.storage.local.get(["infos"], (result) => {
-      const { infos } = result;
-      if (infos && infos.length > 0) {
-        handleNotification(infos);
-      }
-    });
-  } else if (RESET_STATUS_ALARM == alarm.name) {
-    chrome.storage.local.get(["infos"], (result) => {
-      const { infos } = result;
+  chrome.storage.local.get(["infos"], ({ infos }) => {
+    if (!infos || infos.length === 0) return;
+
+    if (BIRTHDAY_ALARM === alarm.name) {
+      handleBirthdayAlarm(infos);
+    } else if (
+      RESET_STATUS_ALARM === alarm.name ||
+      AUTO_BACKUP_ALARM === alarm.name
+    ) {
       resetStatus(infos);
-    });
-  } else if (AUTO_BACKUP_ALARM == alarm.name) {
-    chrome.storage.local.get(["infos"], (result) => {
-      const { infos } = result;
-      resetStatus(infos);
-    });
-  }
+    }
+  });
 });
 
 const resetStatus = (infos) => {
-  if (!infos || infos.length == 0) return;
-  infos.forEach((info) => {
-    if (!isActive(info)) {
-      info.status = 1;
-    }
-  });
-  chrome.storage.local.set({ infos: infos });
+  if (!infos || infos.length === 0) return;
+
+  const updatedInfos = infos.map((info) =>
+    !isActive(info) ? { ...info, status: 1 } : info
+  );
+  chrome.storage.local.set({ infos: updatedInfos });
 };
 
-const backupToFile = () => {
-  if (!infos || infos.length == 0) return;
-  infos.forEach((info) => {
-    if (!isActive(info)) {
-      info.status = 1;
-    }
-  });
-};
+const handleBirthdayAlarm = (infos) => {
+  const filteredItems = infos.filter(
+    (info) => isBirthdayComing(info) && isActive(info)
+  );
 
-const handleNotification = (infos) => {
-  if (infos.length > 0) {
-    const filteredItems = infos.filter(
-      (info) => isBirthdayComing(info) && isActive(info)
-    );
-    console.log("filteredItems: ", filteredItems);
-    if (filteredItems.length > 0)
-      createNotification(filteredItems[0], filteredItems.length - 1);
+  if (filteredItems.length > 0) {
+    createNotification(filteredItems[0]);
   }
 };
 
-let fbLink;
+let fbLink = "";
 const createNotification = (activeAppointment) => {
+  console.log("Jump into createNotification", activeAppointment);
+  fbLink = activeAppointment.fbLink;
+  const { name, birthDate } = activeAppointment;
+  const formattedDate = birthDate.replaceAll("-", "/");
+  const message = `${name}'s birthday - ${formattedDate} is coming. Let's prepare something for this lovely one`;
+
   chrome.notifications.create({
     type: "basic",
-    title: "There will have a birthday soon!",
-    message: `${
-      activeAppointment.name
-    }'s birthday - ${activeAppointment.birthDate.replaceAll(
-      "-",
-      "/"
-    )} is coming. Let's prepare something for this lovely one`,
-    iconUrl: "./images/icon-48.png",
+    title: "There will be a birthday soon!",
+    message: message,
+    iconUrl: "./images/thumbnail/icon-48.png",
   });
-  fbLink = activeAppointment.fbLink;
 };
 
 chrome.notifications.onClicked.addListener(() => {
   chrome.tabs.create({ url: fbLink });
-  chrome.storage.local.get(["infos"], (result) => {
-    const { infos } = result;
-    if (infos && infos.length > 0) {
-      infos.find((info) => info.fbLink == fbLink).status = 0;
-      chrome.storage.local.set({ infos: infos });
-    }
-  });
+  updateInfoStatus(fbLink, 0);
 });
 
+const updateInfoStatus = (fbLink, status) => {
+  chrome.storage.local.get(["infos"], ({ infos }) => {
+    const updatedInfos = infos.map((info) =>
+      info.fbLink === fbLink ? { ...info, status } : info
+    );
+    chrome.storage.local.set({ infos: updatedInfos });
+  });
+};
+
 const isBirthdayComing = (info) => {
-  var birthDate = info.birthDate.split("-");
-  // Get the current date
+  const birthDate = new Date(info.birthDate);
   const currentDate = new Date();
-
-  // Get the birthdate for the current year
-  const birthdateThisYear = new Date(
-    currentDate.getFullYear(),
-    birthDate[1] - 1,
-    birthDate[2]
-  );
-
-  // Calculate the time difference between the current date and the upcoming birthday
-  const timeDiff = birthdateThisYear - currentDate;
-
-  // Convert the time difference to days
+  birthDate.setFullYear(currentDate.getFullYear());
+  const timeDiff = birthDate - currentDate;
   const daysDiff = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-
-  // Check if the upcoming birthday is within 7 days
-  if (daysDiff >= 0 && daysDiff <= 7) {
-    return true;
-  } else {
-    return false;
-  }
+  return daysDiff >= 0 && daysDiff <= 7;
 };
 
 const isActive = (info) => {

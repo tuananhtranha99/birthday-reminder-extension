@@ -8,7 +8,7 @@ const nameInputError = document.getElementById("nameInputError");
 const birthDateError = document.getElementById("birthDateError");
 const fbError = document.getElementById("fbError");
 
-let cachedInfos;
+let cachedInfos = [];
 
 const hideElement = (elem) => {
   elem.style.display = "none";
@@ -27,31 +27,35 @@ const enableElement = (elem) => {
 };
 
 const validateStartDate = () => {
-  if (!birthDateInput.value) {
-    showError(birthDateError, "Oops, you forgot to enter birth date");
-  } else {
-    hideElement(birthDateError);
-  }
-  return birthDateInput.value;
+  const isEmpty = !birthDateInput.value;
+  showErrorOrHide(
+    birthDateError,
+    isEmpty,
+    "Oops, you forgot to enter birth date"
+  );
+  return !isEmpty ? birthDateInput.value : "";
 };
 
 const validateEndDate = () => {
-  if (!fbLinkInput.value) {
-    showError(fbError, "Oh no! You haven't entered a facebook url");
-  } else if (!isFacebookURL(fbLinkInput.value)) {
-    showError(
-      fbError,
-      "Oh no! The URL you are entering is not a facebook url!"
-    );
-  } else {
-    hideElement(fbError);
-  }
-  return fbLinkInput.value && isFacebookURL(fbLinkInput.value);
+  const isEmpty = !fbLinkInput.value;
+  const isInvalid = !isEmpty && !isFacebookURL(fbLinkInput.value);
+  showErrorOrHide(
+    fbError,
+    isEmpty || isInvalid,
+    isInvalid
+      ? "Oh no! The URL you are entering is not a facebook url!"
+      : "Oh no! You haven't entered a facebook url"
+  );
+  return !isEmpty && !isInvalid ? fbLinkInput.value : "";
 };
 
-const showError = (dateErrorElem, errorMessage) => {
-  dateErrorElem.innerHTML = errorMessage;
-  showElement(dateErrorElem);
+const showErrorOrHide = (errorElem, condition, errorMessage) => {
+  if (condition) {
+    errorElem.innerHTML = errorMessage;
+    showElement(errorElem);
+  } else {
+    hideElement(errorElem);
+  }
 };
 
 const validateDates = () => {
@@ -63,20 +67,16 @@ const validateDates = () => {
 
 const performOnStartValidations = () => {
   const isDateValid = validateDates();
-  if (!nameInput.value) {
-    showElement(nameInputError);
-  } else {
-    hideElement(nameInputError);
-  }
-  return nameInput.value && isDateValid;
+  showErrorOrHide(
+    nameInputError,
+    !nameInput.value,
+    "Ah shiet, you don't know their name"
+  );
+  return !!nameInput.value && isDateValid;
 };
 
 const isExistInList = (fbLink) => {
-  getInfos();
-  return cachedInfos.find((currentInfo) => currentInfo.fbLink == fbLink) ==
-    undefined
-    ? false
-    : true;
+  return cachedInfos.some((currentInfo) => currentInfo.fbLink === fbLink);
 };
 
 saveInfoButton.onclick = () => {
@@ -108,43 +108,30 @@ saveInfoButton.onclick = () => {
 };
 
 const getInfos = () => {
-  chrome.storage.local.get(["infos"], (result) => {
-    const { infos } = result;
-
-    if (infos && infos.length > 0) {
-      cachedInfos = infos;
-    } else {
-      cachedInfos = [];
-    }
+  chrome.storage.local.get(["infos"], ({ infos }) => {
+    cachedInfos = infos || [];
   });
 };
 
 getInfos();
 
-const showSuccessToast = () => {
+const showSuccessToast = () =>
+  showNotificationToast("🐱 Add successfully!", "is-success");
+const showDangerToast = () =>
+  showNotificationToast("🐵 This person is already existed", "is-danger");
+
+const showNotificationToast = (message, type) => {
   bulmaToast.toast({
-    message: "🐱 Add successfully!",
+    message,
     duration: 2000,
-    type: "is-success",
+    type,
     pauseOnHover: true,
     animate: { in: "fadeIn", out: "fadeOut" },
   });
 };
 
-const showDangerToast = () => {
-  bulmaToast.toast({
-    message: "🐵 This person is already existed",
-    duration: 2000,
-    type: "is-danger",
-    pauseOnHover: true,
-    animate: { in: "fadeIn", out: "fadeOut" },
-  });
-};
-
-function isFacebookURL(inputURL) {
-  const facebookURLPattern = /^https?:\/\/(www\.)?(facebook\.com|fb\.com)/;
-  return facebookURLPattern.test(inputURL);
-}
+const isFacebookURL = (inputURL) =>
+  /^https?:\/\/(www\.)?(facebook\.com|fb\.com)/.test(inputURL);
 
 const today = spacetime.now().startOf("day").format();
 birthDateInput.setAttribute("max", today);

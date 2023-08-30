@@ -69,33 +69,57 @@ const handleMonthTitle = (month, relatedTrElement, relatedTable) => {
 const getMonth = (month) => {
   switch (month) {
     case "01":
-      return ["January", "../images/january.jpg", "color-white text-right"];
+      return [
+        "January",
+        "../images/month-background/january.jpg",
+        "color-white text-right",
+      ];
     case "02":
-      return ["February", "../images/february.jpg", ""];
+      return ["February", "../images/month-background/february.jpg", ""];
     case "03":
-      return ["March", "../images/march.jpg", "text-right"];
+      return ["March", "../images/month-background/march.jpg", "text-right"];
     case "04":
-      return ["April", "../images/april.jpg", ""];
+      return ["April", "../images/month-background/april.jpg", ""];
     case "05":
-      return ["May", "../images/may.avif", "color-white text-right"];
+      return [
+        "May",
+        "../images/month-background/may.avif",
+        "color-white text-right",
+      ];
     case "06":
-      return ["June", "../images/june.png", ""];
+      return ["June", "../images/month-background/june.png", ""];
     case "07":
-      return ["July", "../images/july.png", "color-white text-right"];
+      return [
+        "July",
+        "../images/month-background/july.png",
+        "color-white text-right",
+      ];
     case "08":
-      return ["August", "../images/august.avif", ""];
+      return ["August", "../images/month-background/august.avif", ""];
     case "09":
       return [
         "September",
-        "../images/september.webp",
+        "../images/month-background/september.webp",
         "color-white text-right",
       ];
     case "10":
-      return ["October", "../images/october.jpg", "color-white"];
+      return [
+        "October",
+        "../images/month-background/october.jpg",
+        "color-white",
+      ];
     case "11":
-      return ["November", "../images/november.jpg", "color-white text-right"];
+      return [
+        "November",
+        "../images/month-background/november.jpg",
+        "color-white text-right",
+      ];
     case "12":
-      return ["December", "../images/december.jpg", "color-white"];
+      return [
+        "December",
+        "../images/month-background/december.jpg",
+        "color-white",
+      ];
   }
 };
 
@@ -259,6 +283,9 @@ fileSelector.addEventListener("change", (event) => {
         infos = [...infos, ...JSON.parse(fr.result)];
       }
       chrome.storage.local.set({ infos: infos });
+      chrome.runtime.sendMessage({
+        event: "onImport",
+      });
     });
   };
   window.location.reload();
