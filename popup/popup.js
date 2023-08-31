@@ -1,3 +1,4 @@
+import { isBirthdayComing } from "../lib/handleNotification.js";
 const nameInput = document.getElementById("nameInput");
 const birthDateInput = document.getElementById("birthDate");
 const fbLinkInput = document.getElementById("fbLinkInput");
@@ -7,6 +8,10 @@ const saveInfoButton = document.getElementById("saveInfoButton");
 const nameInputError = document.getElementById("nameInputError");
 const birthDateError = document.getElementById("birthDateError");
 const fbError = document.getElementById("fbError");
+
+const warningIcon = document.getElementById("warning-icon");
+const warningTooltip = document.getElementById("warningTooltip");
+const badge = document.getElementById("badge");
 
 let cachedInfos = [];
 
@@ -110,6 +115,15 @@ saveInfoButton.onclick = () => {
 const getInfos = () => {
   chrome.storage.local.get(["infos"], ({ infos }) => {
     cachedInfos = infos || [];
+    let numberIncoming = cachedInfos.filter(
+      (info) => isActive(info) && isBirthdayComing(info)
+    ).length;
+    warningTooltip.textContent = `${numberIncoming} birthdays are coming!!!`;
+    badge.textContent = `${numberIncoming}`;
+    if (numberIncoming == 0) {
+      warningIcon.src = "../images/notification/success.gif";
+      badge.style.backgroundColor = "green";
+    }
   });
 };
 
@@ -135,3 +149,11 @@ const isFacebookURL = (inputURL) =>
 
 const today = spacetime.now().startOf("day").format();
 birthDateInput.setAttribute("max", today);
+
+warningIcon.onclick = () => {
+  window.location.href = "birthday-list.html?type=onlyComingBirthdays";
+};
+
+const isActive = (info) => {
+  return info.status == 1;
+};

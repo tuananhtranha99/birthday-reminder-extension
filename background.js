@@ -31,7 +31,7 @@ const handleOnStop = () => {
 const handleOnSave = (newInfo, infos) => {
   infos.push(newInfo);
   chrome.storage.local.set({ infos });
-  createAlarm(BIRTHDAY_ALARM, 60.0);
+  createAlarm(BIRTHDAY_ALARM, 1.0);
 };
 
 const createAlarm = (alarmName, interval) => {
@@ -78,37 +78,30 @@ const handleBirthdayAlarm = (infos) => {
   );
 
   if (filteredItems.length > 0) {
-    createNotification(filteredItems[0]);
+    createNotification(filteredItems[0], filteredItems);
   }
 };
 
 let fbLink = "";
-const createNotification = (activeAppointment) => {
+const createNotification = (activeAppointment, birthdayList) => {
   console.log("Jump into createNotification", activeAppointment);
-  fbLink = activeAppointment.fbLink;
-  const { name, birthDate } = activeAppointment;
-  const formattedDate = birthDate.replaceAll("-", "/");
-  const message = `${name}'s birthday - ${formattedDate} is coming. Let's prepare something for this lovely one`;
+  // fbLink = activeAppointment.fbLink;
+  // const { name, birthDate } = activeAppointment;
+  // const formattedDate = birthDate.replaceAll("-", "/");
+  const message = `There ${birthdayList.length > 1 ? "are" : "is"} ${
+    birthdayList.length
+  } incoming ${birthdayList.length > 1 ? "birthdays" : "birthday"}:`;
+  const items = birthdayList.map((b) => {
+    return { title: b.name, message: b.birthDate.replaceAll("-", "/") };
+  });
 
   chrome.notifications.create({
-    type: "basic",
-    title: "There will be a birthday soon!",
-    message: message,
+    type: "list",
+    title: message,
+    message: "",
+    priority: 1,
+    items: items,
     iconUrl: "./images/thumbnail/icon-48.png",
-  });
-};
-
-chrome.notifications.onClicked.addListener(() => {
-  chrome.tabs.create({ url: fbLink });
-  updateInfoStatus(fbLink, 0);
-});
-
-const updateInfoStatus = (fbLink, status) => {
-  chrome.storage.local.get(["infos"], ({ infos }) => {
-    const updatedInfos = infos.map((info) =>
-      info.fbLink === fbLink ? { ...info, status } : info
-    );
-    chrome.storage.local.set({ infos: updatedInfos });
   });
 };
 

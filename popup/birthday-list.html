@@ -31,10 +31,51 @@
     </style>
   </head>
   <body>
-    <div class="container m-3">
-      <h1 class="title">Birthday List</h1>
+    <div
+      style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        z-index: 1;
+        width: 100%;
+        background-color: white;
+        height: 110px;
+      "
+    >
+      <div class="container mx-3 mt-3 is-flex is-justify-content-space-between">
+        <h1 class="title">Birthday List</h1>
+        <div class="button-group is-flex">
+          <div class="">
+            <a href="./popup.html">
+              <button class="button is-success" id="backBtn">Back</button>
+            </a>
+          </div>
+          <div class="">
+            <input type="file" id="fileUpload" style="display: none" />
+            <button class="button is-warning ml-3" id="importBtn">
+              Import
+            </button>
+          </div>
+          <div>
+            <button class="button is-danger ml-3" id="exportBtn">Export</button>
+          </div>
+        </div>
+      </div>
+      <div class="container">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th style="min-width: 200px">Name</th>
+              <th style="min-width: 150px">Birthday</th>
+              <th style="min-width: 200px; max-width: 200px">Facebook</th>
+              <th style="min-width: 50px">Option</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
     </div>
-    <div class="container m-3">
+    <div class="container" style="margin-top: 55px">
       <table class="table">
         <thead>
           <tr>
@@ -47,25 +88,6 @@
         </thead>
         <tbody id="tableBody"></tbody>
       </table>
-    </div>
-
-    <div class="container m-3">
-      <a href="./popup.html">
-        <button class="button is-success is-fullwidth" id="backBtn">
-          Back
-        </button>
-      </a>
-    </div>
-
-    <div class="m-3 is-flex">
-      <input type="file" id="fileUpload" style="display: none" />
-      <button class="button is-warning" style="width: 50%" id="importBtn">
-        Import
-      </button>
-
-      <button class="button is-danger ml-3" style="width: 48%" id="exportBtn">
-        Export
-      </button>
     </div>
   </body>
 

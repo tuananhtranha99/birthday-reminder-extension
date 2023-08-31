@@ -7,22 +7,31 @@ let isActiveTitle = "One important birthday is coming !!!!";
 let isInactiveTitle =
   "You already said happy birthday to this lovely person. Hurray!";
 
-const getInfos = () => {
+const generateHTML = () => {
   chrome.storage.local.get(["infos"], (result) => {
     let { infos } = result;
+    let populatedList;
 
     if (isEmptyList(infos)) {
       exportBtn.disabled = true;
       return;
     }
+    if (type === COMING_BIRTHDAY) {
+      populatedList = infos.filter(
+        (info) => isActive(info) && isBirthdayComing(info)
+      );
+    } else {
+      populatedList = infos;
+    }
     let map = convertObjectToOrderedMap(
-      groupBy(infos, (info) => info.birthDate.split("-")[1]) // group birth dates by month
+      groupBy(populatedList, (info) => info.birthDate.split("-")[1]) // group birth dates by month
     );
 
-    populateDataFromMap(map, infos);
+    populateDataFromMap(map, populatedList);
   });
 };
-getInfos();
+
+generateHTML();
 
 const isEmptyList = (list) => {
   return !list || list.length == 0;
@@ -313,3 +322,12 @@ const exportFile = () => {
     URL.revokeObjectURL(link.href);
   });
 };
+
+var type = null;
+const COMING_BIRTHDAY = "onlyComingBirthdays";
+document.addEventListener("DOMContentLoaded", (event) => {
+  const parameters = new URLSearchParams(window.location.search);
+  type = parameters.get("type");
+  console.log("type", type);
+  event.preventDefault();
+});

@@ -1,20 +1,29 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Birthday Reminder</title>
     <link rel="stylesheet" href="bulma.min.css" />
-    <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/animate.css@4.0.0/animate.min.css"/>
+    <link rel="stylesheet" href="popup.css" />
 </head>
+
 <body>
     <div class="container m-3">
         <h1 class="title">Birthday Reminder</h1>
 
-        <div class="field">
-            <label for="" class="label"><a href="./birthday-list.html">See birthday list</a></label>
+        <div class="field is-flex is-align-items-center">
+            <label for="" class="label mr-3"><a href="./birthday-list.html">See all birthdays</a></label>
+            <div class="is-relative " style="width: 60%;">
+                <img id="warning-icon" style="width: 40px;" src="../images/notification/warning.gif">
+                <div id="warningTooltip">
+                    9 birthdays are coming!!!
+                </div>
+                <div id="badge">50</div>
+                
+            </div>
+
         </div>
     </div>
     <div class="container m-3">
@@ -24,7 +33,7 @@
                 <input type="text" class="input" name="" id="nameInput" placeholder="Trần Hà Tuấn Anh"></select>
             </div>
 
-        <p id="nameInputError" class="help is-danger" style="display: none;"></p>
+            <p id="nameInputError" class="help is-danger" style="display: none;"></p>
         </div>
 
         <div class="field">
@@ -47,13 +56,15 @@
     </div>
 
     <div class="container m-3">
-        <button class="button is-success is-fullwidth" id="saveInfoButton">Remind me when it's birthday of this angel 📢</button>
+        <button class="button is-success is-fullwidth" id="saveInfoButton">Remind me when it's birthday of this angel
+            📢</button>
     </div>
 
 </body>
 
 <script src="bulma-toast.min.js"></script>
 <script src="spacetime.min.js"></script>
-<script src="popup.js" ></script>
+<script src="popup.js" type="module"></script>
 <script src="../background.js"></script>
+
 </html>
