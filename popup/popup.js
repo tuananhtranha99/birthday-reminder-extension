@@ -106,13 +106,22 @@ saveInfoButton.onclick = () => {
     newInfo: newInfo,
     infos: cachedInfos,
   });
-  showSuccessToast();
-  nameInput.value = "";
-  birthDateInput.value = "";
-  fbLinkInput.value = "";
+  window.location.href = `popup.html?type=${SUCCESS_ADD}`;
 };
 
+var type = null;
+const SUCCESS_ADD = "addSuccessfully";
+document.addEventListener("DOMContentLoaded", (event) => {
+  const parameters = new URLSearchParams(window.location.search);
+  type = parameters.get("type");
+  event.preventDefault();
+  getInfos();
+});
+
 const getInfos = () => {
+  if (type === SUCCESS_ADD) {
+    showSuccessToast();
+  }
   chrome.storage.local.get(["infos"], ({ infos }) => {
     cachedInfos = infos || [];
     let numberIncoming = cachedInfos.filter(
@@ -126,8 +135,6 @@ const getInfos = () => {
     }
   });
 };
-
-getInfos();
 
 const showSuccessToast = () =>
   showNotificationToast("🐱 Add successfully!", "is-success");

@@ -138,8 +138,44 @@ const handleBirthdaysByMonth = (infosInMonth, allInfos) => {
     let info = infosInMonth[i];
     let trElement = document.createElement("tr");
     createElementWithoutAttribute("td", i + 1, trElement);
-    createElementWithoutAttribute("td", info.name, trElement);
-    createElementWithoutAttribute("td", info.birthDate, trElement);
+
+    const tdForName = createElementWithoutAttribute("td", "", trElement);
+    createElementWithAttribute(
+      "span",
+      info.name,
+      [["id", "nameSpan-" + info.fbLink]],
+      tdForName
+    );
+    const nameInput = createElementWithAttribute(
+      "input",
+      "",
+      [
+        ["value", info.name],
+        ["id", "nameInput-" + info.fbLink],
+      ],
+      tdForName
+    );
+    setStyleForElement(nameInput, "display", "none");
+
+    const tdForBirthdate = createElementWithoutAttribute("td", "", trElement);
+    createElementWithAttribute(
+      "span",
+      info.birthDate,
+      [["id", "birthdateSpan-" + info.fbLink]],
+      tdForBirthdate
+    );
+    const birthdateInput = createElementWithAttribute(
+      "input",
+      "",
+      [
+        ["value", info.birthDate],
+        ["type", "date"],
+        ["id", "birthdateInput-" + info.fbLink],
+      ],
+      tdForBirthdate
+    );
+    setStyleForElement(birthdateInput, "display", "none");
+
     handleTdTagForFacebookUrl(info, trElement);
     handleTdTagForOption(info, allInfos, trElement);
 
@@ -177,16 +213,123 @@ const handleTdTagForOption = (personalInfo, allBirthdays, relatedTrElement) => {
     showUnfinishedIcon(personalInfo, tdElement, allBirthdays);
   }
   showDeleteIcon(personalInfo, tdElement, allBirthdays);
+  showEditIcon(personalInfo, tdElement, allBirthdays);
+  createSaveIconForUpdate(personalInfo, tdElement, allBirthdays);
+};
+
+const createSaveIconForUpdate = (
+  personalInfo,
+  relatedTdElement,
+  allBirthdays
+) => {
+  let saveButton = createElementWithAttribute(
+    "img",
+    "",
+    [
+      ["src", "../images/save-icons/static-saveIcon.png"],
+      ["title", "Save"],
+    ],
+    relatedTdElement
+  );
+  setStyleForElement(saveButton, "width", "22px");
+  setStyleForElement(saveButton, "cursor", "pointer");
+  setStyleForElement(saveButton, "display", "none");
+  setAttributeForElement(
+    saveButton,
+    "id",
+    "saveAfterEdit-" + personalInfo.fbLink
+  );
+  saveButton.onclick = () => {
+    const editButton = document.getElementById("edit-" + personalInfo.fbLink);
+    setStyleForElement(editButton, "display", "inline-block");
+    setStyleForElement(saveButton, "display", "none");
+    const nameSpan = document.getElementById("nameSpan-" + personalInfo.fbLink);
+    const nameInput = document.getElementById(
+      "nameInput-" + personalInfo.fbLink
+    );
+    setStyleForElement(nameInput, "display", "none");
+    setStyleForElement(nameSpan, "display", "inline-block");
+    const deleteButton = document.getElementById(
+      "deleteIcon-" + personalInfo.fbLink
+    );
+    setStyleForElement(deleteButton, "display", "inline-block");
+    const birthdateInput = document.getElementById(
+      "birthdateInput-" + personalInfo.fbLink
+    );
+    setStyleForElement(birthdateInput, "display", "none");
+    const birthdateSpan = document.getElementById(
+      "birthdateSpan-" + personalInfo.fbLink
+    );
+    setStyleForElement(birthdateSpan, "display", "inline-block");
+    nameSpan.textContent = nameInput.value;
+    birthdateSpan.textContent = birthdateInput.value;
+  };
+  saveButton.onmouseover = () => {
+    setAttributeForElement(
+      saveButton,
+      "src",
+      "../images/save-icons/animated-saveIcon.gif"
+    );
+  };
+  saveButton.onmouseleave = () => {
+    setAttributeForElement(
+      saveButton,
+      "src",
+      "../images/save-icons/static-saveIcon.png"
+    );
+  };
+};
+
+const showEditIcon = (personalInfo, relatedTdElement, allBirthdays) => {
+  let editButton = createElementWithAttribute(
+    "img",
+    "",
+    [["src", "../images/editIcon.png"]],
+    relatedTdElement
+  );
+  setStyleForElement(editButton, "width", "22px");
+  setStyleForElement(editButton, "cursor", "pointer");
+  setAttributeForElement(editButton, "id", "edit-" + personalInfo.fbLink);
+  editButton.onclick = () => {
+    const saveButton = document.getElementById(
+      "saveAfterEdit-" + personalInfo.fbLink
+    );
+    const nameSpan = document.getElementById("nameSpan-" + personalInfo.fbLink);
+    const nameInput = document.getElementById(
+      "nameInput-" + personalInfo.fbLink
+    );
+    const deleteButton = document.getElementById(
+      "deleteIcon-" + personalInfo.fbLink
+    );
+    const birthdateInput = document.getElementById(
+      "birthdateInput-" + personalInfo.fbLink
+    );
+    const birthdateSpan = document.getElementById(
+      "birthdateSpan-" + personalInfo.fbLink
+    );
+    setStyleForElement(nameInput, "display", "inline-block");
+    setStyleForElement(birthdateInput, "display", "inline-block");
+    setStyleForElement(saveButton, "display", "inline-block");
+
+    setStyleForElement(nameSpan, "display", "none");
+    setStyleForElement(birthdateSpan, "display", "none");
+    setStyleForElement(deleteButton, "display", "none");
+    setStyleForElement(editButton, "display", "none");
+  };
 };
 
 const showDeleteIcon = (personalInfo, relatedTdElement, allBirthdays) => {
   let deleteButton = createElementWithAttribute(
     "img",
     "",
-    [["src", "../images/deleteIcon.webp"]],
+    [
+      ["src", "../images/deleteIcon.webp"],
+      ["id", "deleteIcon-" + personalInfo.fbLink],
+    ],
     relatedTdElement
   );
   setStyleForElement(deleteButton, "width", "22px");
+  setStyleForElement(deleteButton, "cursor", "pointer");
   deleteButton.onclick = () => {
     let deleteIndex = allBirthdays.findIndex(
       (item) => item.fbLink == personalInfo.fbLink
@@ -275,6 +418,10 @@ const setClassForElement = (element, className) => {
 
 const setStyleForElement = (element, styleName, styleValue) => {
   element.style[styleName] = styleValue;
+};
+
+const setAttributeForElement = (element, attributeName, attributeValue) => {
+  element.setAttribute(attributeName, attributeValue);
 };
 
 //function to use when import a file
