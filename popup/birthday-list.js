@@ -478,3 +478,6 @@ document.addEventListener("DOMContentLoaded", (event) => {
   console.log("type", type);
   event.preventDefault();
 });
+
+
+thêm mấy dòng lỗi vào để test cherry pick
