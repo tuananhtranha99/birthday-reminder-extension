@@ -7,9 +7,11 @@ let isActiveTitle = "One important birthday is coming !!!!";
 let isInactiveTitle =
   "You already said happy birthday to this lovely person. Hurray!";
 
+var cachedBirthdayList;
 const generateHTML = () => {
   chrome.storage.local.get(["infos"], (result) => {
     let { infos } = result;
+    cachedBirthdayList = infos;
     let populatedList;
 
     if (isEmptyList(infos)) {
@@ -23,6 +25,7 @@ const generateHTML = () => {
     } else {
       populatedList = infos;
     }
+    console.log("populatedList", populatedList);
     let map = convertObjectToOrderedMap(
       groupBy(populatedList, (info) => info.birthDate.split("-")[1]) // group birth dates by month
     );
@@ -138,8 +141,44 @@ const handleBirthdaysByMonth = (infosInMonth, allInfos) => {
     let info = infosInMonth[i];
     let trElement = document.createElement("tr");
     createElementWithoutAttribute("td", i + 1, trElement);
-    createElementWithoutAttribute("td", info.name, trElement);
-    createElementWithoutAttribute("td", info.birthDate, trElement);
+
+    const tdForName = createElementWithoutAttribute("td", "", trElement);
+    createElementWithAttribute(
+      "span",
+      info.name,
+      [["id", "nameSpan-" + info.fbLink]],
+      tdForName
+    );
+    const nameInput = createElementWithAttribute(
+      "input",
+      "",
+      [
+        ["value", info.name],
+        ["id", "nameInput-" + info.fbLink],
+      ],
+      tdForName
+    );
+    setStyleForElement(nameInput, "display", "none");
+
+    const tdForBirthdate = createElementWithoutAttribute("td", "", trElement);
+    createElementWithAttribute(
+      "span",
+      info.birthDate,
+      [["id", "birthdateSpan-" + info.fbLink]],
+      tdForBirthdate
+    );
+    const birthdateInput = createElementWithAttribute(
+      "input",
+      "",
+      [
+        ["value", info.birthDate],
+        ["type", "date"],
+        ["id", "birthdateInput-" + info.fbLink],
+      ],
+      tdForBirthdate
+    );
+    setStyleForElement(birthdateInput, "display", "none");
+
     handleTdTagForFacebookUrl(info, trElement);
     handleTdTagForOption(info, allInfos, trElement);
 
@@ -177,25 +216,123 @@ const handleTdTagForOption = (personalInfo, allBirthdays, relatedTrElement) => {
     showUnfinishedIcon(personalInfo, tdElement, allBirthdays);
   }
   showDeleteIcon(personalInfo, tdElement, allBirthdays);
+  showEditIcon(personalInfo, tdElement, allBirthdays);
+  createSaveIconForUpdate(personalInfo, tdElement, allBirthdays);
+};
+
+const createSaveIconForUpdate = (
+  personalInfo,
+  relatedTdElement,
+  allBirthdays
+) => {
+  let saveButton = createElementWithAttribute(
+    "img",
+    "",
+    [
+      ["src", "../images/save-icons/static-saveIcon.png"],
+      ["title", "Save"],
+    ],
+    relatedTdElement
+  );
+  setStyleForElement(saveButton, "width", "22px");
+  setStyleForElement(saveButton, "cursor", "pointer");
+  setStyleForElement(saveButton, "display", "none");
+  setAttributeForElement(
+    saveButton,
+    "id",
+    "saveAfterEdit-" + personalInfo.fbLink
+  );
+  saveButton.onclick = () => {
+    const nameInput = document.getElementById(
+      "nameInput-" + personalInfo.fbLink
+    );
+    const birthdateInput = document.getElementById(
+      "birthdateInput-" + personalInfo.fbLink
+    );
+
+    let selectedPerson = cachedBirthdayList.find(
+      (info) => info.fbLink == personalInfo.fbLink
+    );
+    selectedPerson.name = nameInput.value;
+    selectedPerson.birthDate = birthdateInput.value;
+    chrome.storage.local.set({ infos: cachedBirthdayList });
+    window.location.reload();
+  };
+  saveButton.onmouseover = () => {
+    setAttributeForElement(
+      saveButton,
+      "src",
+      "../images/save-icons/animated-saveIcon.gif"
+    );
+  };
+  saveButton.onmouseleave = () => {
+    setAttributeForElement(
+      saveButton,
+      "src",
+      "../images/save-icons/static-saveIcon.png"
+    );
+  };
+};
+
+const showEditIcon = (personalInfo, relatedTdElement, allBirthdays) => {
+  let editButton = createElementWithAttribute(
+    "img",
+    "",
+    [["src", "../images/editIcon.png"]],
+    relatedTdElement
+  );
+  setStyleForElement(editButton, "width", "22px");
+  setStyleForElement(editButton, "cursor", "pointer");
+  setAttributeForElement(editButton, "id", "edit-" + personalInfo.fbLink);
+  editButton.onclick = () => {
+    const saveButton = document.getElementById(
+      "saveAfterEdit-" + personalInfo.fbLink
+    );
+    const nameSpan = document.getElementById("nameSpan-" + personalInfo.fbLink);
+    const nameInput = document.getElementById(
+      "nameInput-" + personalInfo.fbLink
+    );
+    const deleteButton = document.getElementById(
+      "deleteIcon-" + personalInfo.fbLink
+    );
+    const birthdateInput = document.getElementById(
+      "birthdateInput-" + personalInfo.fbLink
+    );
+    const birthdateSpan = document.getElementById(
+      "birthdateSpan-" + personalInfo.fbLink
+    );
+    setStyleForElement(nameInput, "display", "inline-block");
+    setStyleForElement(birthdateInput, "display", "inline-block");
+    setStyleForElement(saveButton, "display", "inline-block");
+
+    setStyleForElement(nameSpan, "display", "none");
+    setStyleForElement(birthdateSpan, "display", "none");
+    setStyleForElement(deleteButton, "display", "none");
+    setStyleForElement(editButton, "display", "none");
+  };
 };
 
 const showDeleteIcon = (personalInfo, relatedTdElement, allBirthdays) => {
   let deleteButton = createElementWithAttribute(
     "img",
     "",
-    [["src", "../images/deleteIcon.webp"]],
+    [
+      ["src", "../images/deleteIcon.webp"],
+      ["id", "deleteIcon-" + personalInfo.fbLink],
+    ],
     relatedTdElement
   );
   setStyleForElement(deleteButton, "width", "22px");
-  deleteButton.onclick = () => {
-    let deleteIndex = allBirthdays.findIndex(
-      (item) => item.fbLink == personalInfo.fbLink
-    );
-
-    allBirthdays.splice(deleteIndex, 1);
-    chrome.storage.local.set({ infos: allBirthdays });
-    window.location.reload();
-  };
+  setStyleForElement(deleteButton, "cursor", "pointer");
+  deleteButton.addEventListener("click", () => {
+    deletedItem = personalInfo;
+    document.getElementById(
+      "modal-content"
+    ).innerHTML = `Do you really want to delete <b><i>${personalInfo.name}</i></b> from the list. You will not be able to undo
+    this!`;
+    const $target = document.getElementById("modal-js-example");
+    openModal($target);
+  });
 };
 
 const showFinishedIcon = (personalInfo, relatedTdElement, allBirthdays) => {
@@ -234,9 +371,11 @@ const showUnfinishedIcon = (personalInfo, relatedTdElement, allBirthdays) => {
 
   imgElement.onclick = () => {
     let fbLink = imgElement.getAttribute("fbLink");
-    let selectedPerson = allBirthdays.find((info) => info.fbLink == fbLink);
+    let selectedPerson = cachedBirthdayList.find(
+      (info) => info.fbLink == fbLink
+    );
     selectedPerson.status = 0;
-    chrome.storage.local.set({ infos: allBirthdays });
+    chrome.storage.local.set({ infos: cachedBirthdayList });
     window.location.reload();
   };
 };
@@ -275,6 +414,10 @@ const setClassForElement = (element, className) => {
 
 const setStyleForElement = (element, styleName, styleValue) => {
   element.style[styleName] = styleValue;
+};
+
+const setAttributeForElement = (element, attributeName, attributeValue) => {
+  element.setAttribute(attributeName, attributeValue);
 };
 
 //function to use when import a file
@@ -328,6 +471,35 @@ const COMING_BIRTHDAY = "onlyComingBirthdays";
 document.addEventListener("DOMContentLoaded", (event) => {
   const parameters = new URLSearchParams(window.location.search);
   type = parameters.get("type");
-  console.log("type", type);
   event.preventDefault();
+});
+
+function openModal($el) {
+  $el.classList.add("is-active");
+}
+
+function closeModal($el) {
+  $el.classList.remove("is-active");
+}
+
+(
+  document.querySelectorAll(
+    ".modal-background, .modal-card-head .delete, .modal-card-foot .button"
+  ) || []
+).forEach(($close) => {
+  const $target = $close.closest(".modal");
+
+  $close.addEventListener("click", () => {
+    closeModal($target);
+  });
+});
+
+var deletedItem;
+document.getElementById("confirm-button").addEventListener("click", () => {
+  let deleteIndex = cachedBirthdayList.findIndex(
+    (item) => item.fbLink == deletedItem.fbLink
+  );
+  cachedBirthdayList.splice(deleteIndex, 1);
+  chrome.storage.local.set({ infos: cachedBirthdayList });
+  window.location.reload();
 });

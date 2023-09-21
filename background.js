@@ -24,14 +24,14 @@ chrome.runtime.onMessage.addListener((data) => {
 });
 
 const handleOnStop = () => {
-  stopAlarm();
-  chrome.storage.local.clear();
+  // stopAlarm();
+  // chrome.storage.local.clear();
 };
 
 const handleOnSave = (newInfo, infos) => {
   infos.push(newInfo);
   chrome.storage.local.set({ infos });
-  createAlarm(BIRTHDAY_ALARM, 1.0);
+  createAlarm(BIRTHDAY_ALARM, 60.0);
 };
 
 const createAlarm = (alarmName, interval) => {
