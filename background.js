@@ -24,8 +24,8 @@ chrome.runtime.onMessage.addListener((data) => {
 });
 
 const handleOnStop = () => {
-  stopAlarm();
-  chrome.storage.local.clear();
+  // stopAlarm();
+  // chrome.storage.local.clear();
 };
 
 const handleOnSave = (newInfo, infos) => {

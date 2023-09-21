@@ -7,9 +7,11 @@ let isActiveTitle = "One important birthday is coming !!!!";
 let isInactiveTitle =
   "You already said happy birthday to this lovely person. Hurray!";
 
+var cachedBirthdayList;
 const generateHTML = () => {
   chrome.storage.local.get(["infos"], (result) => {
     let { infos } = result;
+    cachedBirthdayList = infos;
     let populatedList;
 
     if (isEmptyList(infos)) {
@@ -23,6 +25,7 @@ const generateHTML = () => {
     } else {
       populatedList = infos;
     }
+    console.log("populatedList", populatedList);
     let map = convertObjectToOrderedMap(
       groupBy(populatedList, (info) => info.birthDate.split("-")[1]) // group birth dates by month
     );
@@ -240,29 +243,20 @@ const createSaveIconForUpdate = (
     "saveAfterEdit-" + personalInfo.fbLink
   );
   saveButton.onclick = () => {
-    const editButton = document.getElementById("edit-" + personalInfo.fbLink);
-    setStyleForElement(editButton, "display", "inline-block");
-    setStyleForElement(saveButton, "display", "none");
-    const nameSpan = document.getElementById("nameSpan-" + personalInfo.fbLink);
     const nameInput = document.getElementById(
       "nameInput-" + personalInfo.fbLink
     );
-    setStyleForElement(nameInput, "display", "none");
-    setStyleForElement(nameSpan, "display", "inline-block");
-    const deleteButton = document.getElementById(
-      "deleteIcon-" + personalInfo.fbLink
-    );
-    setStyleForElement(deleteButton, "display", "inline-block");
     const birthdateInput = document.getElementById(
       "birthdateInput-" + personalInfo.fbLink
     );
-    setStyleForElement(birthdateInput, "display", "none");
-    const birthdateSpan = document.getElementById(
-      "birthdateSpan-" + personalInfo.fbLink
+
+    let selectedPerson = cachedBirthdayList.find(
+      (info) => info.fbLink == personalInfo.fbLink
     );
-    setStyleForElement(birthdateSpan, "display", "inline-block");
-    nameSpan.textContent = nameInput.value;
-    birthdateSpan.textContent = birthdateInput.value;
+    selectedPerson.name = nameInput.value;
+    selectedPerson.birthDate = birthdateInput.value;
+    chrome.storage.local.set({ infos: cachedBirthdayList });
+    window.location.reload();
   };
   saveButton.onmouseover = () => {
     setAttributeForElement(
@@ -330,15 +324,15 @@ const showDeleteIcon = (personalInfo, relatedTdElement, allBirthdays) => {
   );
   setStyleForElement(deleteButton, "width", "22px");
   setStyleForElement(deleteButton, "cursor", "pointer");
-  deleteButton.onclick = () => {
-    let deleteIndex = allBirthdays.findIndex(
-      (item) => item.fbLink == personalInfo.fbLink
-    );
-
-    allBirthdays.splice(deleteIndex, 1);
-    chrome.storage.local.set({ infos: allBirthdays });
-    window.location.reload();
-  };
+  deleteButton.addEventListener("click", () => {
+    deletedItem = personalInfo;
+    document.getElementById(
+      "modal-content"
+    ).innerHTML = `Do you really want to delete <b><i>${personalInfo.name}</i></b> from the list. You will not be able to undo
+    this!`;
+    const $target = document.getElementById("modal-js-example");
+    openModal($target);
+  });
 };
 
 const showFinishedIcon = (personalInfo, relatedTdElement, allBirthdays) => {
@@ -377,9 +371,11 @@ const showUnfinishedIcon = (personalInfo, relatedTdElement, allBirthdays) => {
 
   imgElement.onclick = () => {
     let fbLink = imgElement.getAttribute("fbLink");
-    let selectedPerson = allBirthdays.find((info) => info.fbLink == fbLink);
+    let selectedPerson = cachedBirthdayList.find(
+      (info) => info.fbLink == fbLink
+    );
     selectedPerson.status = 0;
-    chrome.storage.local.set({ infos: allBirthdays });
+    chrome.storage.local.set({ infos: cachedBirthdayList });
     window.location.reload();
   };
 };
@@ -475,9 +471,35 @@ const COMING_BIRTHDAY = "onlyComingBirthdays";
 document.addEventListener("DOMContentLoaded", (event) => {
   const parameters = new URLSearchParams(window.location.search);
   type = parameters.get("type");
-  console.log("type", type);
   event.preventDefault();
 });
 
+function openModal($el) {
+  $el.classList.add("is-active");
+}
 
-thêm mấy dòng lỗi vào để test cherry pick
+function closeModal($el) {
+  $el.classList.remove("is-active");
+}
+
+(
+  document.querySelectorAll(
+    ".modal-background, .modal-card-head .delete, .modal-card-foot .button"
+  ) || []
+).forEach(($close) => {
+  const $target = $close.closest(".modal");
+
+  $close.addEventListener("click", () => {
+    closeModal($target);
+  });
+});
+
+var deletedItem;
+document.getElementById("confirm-button").addEventListener("click", () => {
+  let deleteIndex = cachedBirthdayList.findIndex(
+    (item) => item.fbLink == deletedItem.fbLink
+  );
+  cachedBirthdayList.splice(deleteIndex, 1);
+  chrome.storage.local.set({ infos: cachedBirthdayList });
+  window.location.reload();
+});

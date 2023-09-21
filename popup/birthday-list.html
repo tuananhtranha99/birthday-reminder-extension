@@ -89,6 +89,25 @@
         <tbody id="tableBody"></tbody>
       </table>
     </div>
+
+    <!-- Modal to confirm delete action -->
+    <div class="modal js-modal-trigger" id="modal-js-example">
+      <div class="modal-background"></div>
+      <div class="modal-card" style="max-width: 300px">
+        <header class="modal-card-head">
+          <p class="modal-card-title">Delete confirmation</p>
+          <button class="delete" aria-label="close"></button>
+        </header>
+        <section class="modal-card-body" id="modal-content">
+          Do you really want to delete this one. You will not be able to undo
+          this
+        </section>
+        <footer class="modal-card-foot">
+          <button class="button is-danger" id="confirm-button">Yes</button>
+          <button class="button">Cancel</button>
+        </footer>
+      </div>
+    </div>
   </body>
 
   <script src="birthday-list.js" type="module"></script>
